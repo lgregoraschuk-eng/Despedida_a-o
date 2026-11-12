@@ -661,6 +661,37 @@
     color: var(--color-white);
   }
 
+  /* Tarjeta de confirmación afirmativa */
+  .attendance-card-single {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    background: linear-gradient(135deg, rgba(30, 58, 95, 0.65) 0%, rgba(214, 184, 117, 0.12) 100%);
+    border: 1px solid var(--color-gold);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.125rem;
+    color: var(--color-white);
+  }
+
+  .attendance-check-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-dark) 100%);
+    color: var(--color-primary-dark);
+    flex-shrink: 0;
+  }
+
+  .attendance-text {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-white);
+    letter-spacing: 0.01em;
+  }
+
   /* Botón principal */
   .form-actions {
     margin-top: 0.5rem;

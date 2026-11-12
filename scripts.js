@@ -1,7 +1,7 @@
 // Variables de estado
 var estadoApp = {
   nombre: '',
-  asistencia: null,
+  asistencia: 'SI',
   tieneRestriccion: 'NO',
   detalleRestriccion: '',
   enviando: false
@@ -31,7 +31,7 @@ function obtenerConfig() {
     HORARIO_EVENTO: '20:00 hs',
     LUGAR_EVENTO: 'Salón Sosiego',
     UBICACION_MAPS_URL: 'https://maps.app.goo.gl/Wj3KGgGST2dAqve68',
-    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzMEK3NgsSS3i2_GPbfy4QsRI1H5fqttNlzJXC8kmq7xpqAH8B5-SV9ycDsDI1vosVb/exec'
+    SHEETDB_URL: 'https://sheetdb.io/api/v1/w500zvegdxazp'
   };
 }
 
@@ -88,66 +88,45 @@ function aplicarConfiguracion() {
 function mostrarFormulario() {
   var formContainer = document.getElementById('form-container');
   var successYes = document.getElementById('success-yes-view');
-  var successNo = document.getElementById('success-no-view');
 
   if (successYes) {
     successYes.hidden = true;
     successYes.style.display = 'none';
-  }
-  if (successNo) {
-    successNo.hidden = true;
-    successNo.style.display = 'none';
   }
   if (formContainer) {
     formContainer.hidden = false;
     formContainer.style.display = 'block';
   }
 
-  var radioSi = document.getElementById('asistencia-si');
-  alternarVisibilidadRestriccion(radioSi && radioSi.checked);
-  actualizarEstilosRadios();
-  ocultarBannerError();
-}
+  var nombreInput = document.getElementById('nombre-input');
+  if (nombreInput) {
+    nombreInput.value = '';
+    nombreInput.removeAttribute('aria-invalid');
+  }
 
-function alternarVisibilidadRestriccion(asiste) {
-  var dietaryContainer = document.getElementById('dietary-container');
-  var dietaryDetailBox = document.getElementById('dietary-detail-box');
   var radioNo = document.getElementById('restriccion-no');
   var radioSi = document.getElementById('restriccion-si');
   var detalleInput = document.getElementById('restriccion-detalle-input');
+  var dietaryDetailBox = document.getElementById('dietary-detail-box');
 
-  if (asiste) {
-    if (dietaryContainer) {
-      dietaryContainer.hidden = false;
-      dietaryContainer.style.display = 'flex';
-    }
-    if (radioSi && radioSi.checked) {
-      if (dietaryDetailBox) {
-        dietaryDetailBox.hidden = false;
-        dietaryDetailBox.style.display = 'flex';
-      }
-    }
-  } else {
-    if (dietaryContainer) {
-      dietaryContainer.hidden = true;
-      dietaryContainer.style.display = 'none';
-    }
-    if (dietaryDetailBox) {
-      dietaryDetailBox.hidden = true;
-      dietaryDetailBox.style.display = 'none';
-    }
-    if (radioNo) radioNo.checked = true;
-    if (radioSi) radioSi.checked = false;
-    if (detalleInput) detalleInput.value = '';
-    limpiarErrorCampo('dietary-detalle');
-    actualizarEstilosRadios();
+  if (radioNo) radioNo.checked = true;
+  if (radioSi) radioSi.checked = false;
+  if (dietaryDetailBox) {
+    dietaryDetailBox.hidden = true;
+    dietaryDetailBox.style.display = 'none';
   }
+  if (detalleInput) {
+    detalleInput.value = '';
+    detalleInput.removeAttribute('aria-invalid');
+  }
+
+  actualizarEstilosRadios();
+  ocultarBannerError();
 }
 
 function mostrarVistaResultado(vistaId) {
   var formContainer = document.getElementById('form-container');
   var successYes = document.getElementById('success-yes-view');
-  var successNo = document.getElementById('success-no-view');
 
   if (formContainer) {
     formContainer.hidden = true;
@@ -156,10 +135,6 @@ function mostrarVistaResultado(vistaId) {
   if (successYes) {
     successYes.hidden = true;
     successYes.style.display = 'none';
-  }
-  if (successNo) {
-    successNo.hidden = true;
-    successNo.style.display = 'none';
   }
 
   var vista = document.getElementById(vistaId);
@@ -216,27 +191,6 @@ function alternarEstadoCarga(cargando) {
 }
 
 function actualizarEstilosRadios() {
-  var radioSi = document.getElementById('asistencia-si');
-  var radioNo = document.getElementById('asistencia-no');
-  var labelSi = document.getElementById('label-asistencia-si');
-  var labelNo = document.getElementById('label-asistencia-no');
-
-  if (labelSi && radioSi) {
-    if (radioSi.checked) {
-      labelSi.classList.add('selected');
-    } else {
-      labelSi.classList.remove('selected');
-    }
-  }
-
-  if (labelNo && radioNo) {
-    if (radioNo.checked) {
-      labelNo.classList.add('selected');
-    } else {
-      labelNo.classList.remove('selected');
-    }
-  }
-
   var restNo = document.getElementById('restriccion-no');
   var restSi = document.getElementById('restriccion-si');
   var labelRestNo = document.getElementById('label-restriccion-no');
@@ -263,31 +217,12 @@ function actualizarEstilosRadios() {
 function iniciarEventosFormulario() {
   var form = document.getElementById('rsvp-form');
   var nombreInput = document.getElementById('nombre-input');
-  var radioSi = document.getElementById('asistencia-si');
-  var radioNo = document.getElementById('asistencia-no');
   var btnEditarSi = document.getElementById('btn-editar-si');
-  var btnEditarNo = document.getElementById('btn-editar-no');
 
   var restNo = document.getElementById('restriccion-no');
   var restSi = document.getElementById('restriccion-si');
   var dietaryDetailBox = document.getElementById('dietary-detail-box');
   var detalleInput = document.getElementById('restriccion-detalle-input');
-
-  if (radioSi) {
-    radioSi.addEventListener('change', function () {
-      actualizarEstilosRadios();
-      limpiarErrorCampo('asistencia');
-      alternarVisibilidadRestriccion(true);
-    });
-  }
-
-  if (radioNo) {
-    radioNo.addEventListener('change', function () {
-      actualizarEstilosRadios();
-      limpiarErrorCampo('asistencia');
-      alternarVisibilidadRestriccion(false);
-    });
-  }
 
   if (restNo) {
     restNo.addEventListener('change', function () {
@@ -330,10 +265,6 @@ function iniciarEventosFormulario() {
     btnEditarSi.addEventListener('click', mostrarFormulario);
   }
 
-  if (btnEditarNo) {
-    btnEditarNo.addEventListener('click', mostrarFormulario);
-  }
-
   if (form) {
     form.addEventListener('submit', procesarEnvioFormulario);
   }
@@ -345,9 +276,6 @@ function limpiarErrorCampo(campo) {
     var error = document.getElementById('nombre-error');
     if (input) input.removeAttribute('aria-invalid');
     if (error) error.textContent = '';
-  } else if (campo === 'asistencia') {
-    var errorAsistencia = document.getElementById('asistencia-error');
-    if (errorAsistencia) errorAsistencia.textContent = '';
   } else if (campo === 'dietary-detalle') {
     var inputDetalle = document.getElementById('restriccion-detalle-input');
     var errorDetalle = document.getElementById('restriccion-detalle-error');
@@ -357,7 +285,7 @@ function limpiarErrorCampo(campo) {
 }
 
 // Validaciones
-function validarFormulario(nombre, asistencia, tieneRestriccion, detalleRestriccion) {
+function validarFormulario(nombre, tieneRestriccion, detalleRestriccion) {
   var esValido = true;
 
   var nombreInput = document.getElementById('nombre-input');
@@ -371,15 +299,7 @@ function validarFormulario(nombre, asistencia, tieneRestriccion, detalleRestricc
     if (nombreError) nombreError.textContent = '';
   }
 
-  var asistenciaError = document.getElementById('asistencia-error');
-  if (!asistencia) {
-    if (asistenciaError) asistenciaError.textContent = 'Por favor, seleccioná si asistirás o no.';
-    esValido = false;
-  } else {
-    if (asistenciaError) asistenciaError.textContent = '';
-  }
-
-  if (asistencia === 'SI' && tieneRestriccion === 'SI') {
+  if (tieneRestriccion === 'SI') {
     var inputDetalle = document.getElementById('restriccion-detalle-input');
     var errorDetalle = document.getElementById('restriccion-detalle-error');
     if (!detalleRestriccion || detalleRestriccion.length < 2) {
@@ -406,74 +326,85 @@ async function procesarEnvioFormulario(evento) {
   var nombreInput = document.getElementById('nombre-input');
   var nombre = nombreInput ? nombreInput.value.trim() : '';
 
-  var radioSi = document.getElementById('asistencia-si');
-  var radioNo = document.getElementById('asistencia-no');
-  var asistencia = null;
-  if (radioSi && radioSi.checked) asistencia = 'SI';
-  if (radioNo && radioNo.checked) asistencia = 'NO';
-
   var tieneRestriccion = 'NO';
-  var detalleRestriccion = '';
+  var detalleRestriccion = '-';
 
-  if (asistencia === 'SI') {
-    var restSi = document.getElementById('restriccion-si');
-    if (restSi && restSi.checked) {
-      tieneRestriccion = 'SI';
-      var detalleInput = document.getElementById('restriccion-detalle-input');
-      detalleRestriccion = detalleInput ? detalleInput.value.trim() : '';
-    }
+  var restSi = document.getElementById('restriccion-si');
+  if (restSi && restSi.checked) {
+    tieneRestriccion = 'SI';
+    var detalleInput = document.getElementById('restriccion-detalle-input');
+    detalleRestriccion = detalleInput && detalleInput.value.trim() ? detalleInput.value.trim() : 'No especificado';
   }
 
   // Validaciones
-  if (!validarFormulario(nombre, asistencia, tieneRestriccion, detalleRestriccion)) {
+  if (!validarFormulario(nombre, tieneRestriccion, detalleRestriccion)) {
     return;
   }
 
   alternarEstadoCarga(true);
   ocultarBannerError();
 
+  var ahora = new Date();
+  var pad = function (n) { return n < 10 ? '0' + n : n; };
+  var timestamp = ahora.getFullYear() + '-' +
+    pad(ahora.getMonth() + 1) + '-' +
+    pad(ahora.getDate()) + ' ' +
+    pad(ahora.getHours()) + ':' +
+    pad(ahora.getMinutes()) + ':' +
+    pad(ahora.getSeconds());
+
   var payload = {
-    nombre: nombre,
-    asistencia: asistencia,
-    tieneRestriccion: tieneRestriccion,
-    detalleRestriccion: detalleRestriccion
+    TIMESTAMP: timestamp,
+    NOMBRE: nombre,
+    ASISTENCIA: 'SI',
+    RESTRICCION_ALIMENTARIA: tieneRestriccion,
+    DETALLE_RESTRICCION: detalleRestriccion
   };
 
   var cfg = obtenerConfig();
-  var urlEndpoint = cfg.APPS_SCRIPT_URL;
+  var endpoint = cfg.SHEETDB_URL || 'https://sheetdb.io/api/v1/w500zvegdxazp';
 
-  // Consultas a base de datos (Simple POST Request sin preflight OPTIONS)
+  // Consultas a base de datos
   try {
-    await fetch(urlEndpoint, {
+    var respuesta = await fetch(endpoint, {
       method: 'POST',
-      mode: 'no-cors',
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        data: [payload]
+      })
     });
 
-    alternarEstadoCarga(false);
-    alCompletarConfirmacion(payload);
+    if (respuesta.ok) {
+      alternarEstadoCarga(false);
+      alCompletarConfirmacion({
+        nombre: nombre,
+        asistencia: 'SI',
+        tieneRestriccion: tieneRestriccion,
+        detalleRestriccion: detalleRestriccion
+      });
+    } else {
+      var errData = await respuesta.json().catch(function () { return {}; });
+      throw new Error(errData.error || 'Error HTTP ' + respuesta.status);
+    }
   } catch (err) {
     // Gestión de errores
     alternarEstadoCarga(false);
-    mostrarBannerError('No pudimos conectar con el servidor para registrar tu confirmación en la planilla. Por favor, verificá tu conexión e intentá nuevamente.');
+    console.error('Error al registrar confirmación en SheetDB:', err);
+    mostrarBannerError('No pudimos conectar con la planilla para registrar tu confirmación. Por favor, verificá tu conexión e intentá nuevamente.');
   }
 }
 
 // Respuesta
 function alCompletarConfirmacion(datos) {
   estadoApp.nombre = datos.nombre || '';
-  estadoApp.asistencia = datos.asistencia || '';
+  estadoApp.asistencia = 'SI';
   estadoApp.tieneRestriccion = datos.tieneRestriccion || 'NO';
   estadoApp.detalleRestriccion = datos.detalleRestriccion || '';
 
-  if (datos.asistencia === 'SI') {
-    mostrarVistaResultado('success-yes-view');
-  } else {
-    mostrarVistaResultado('success-no-view');
-  }
+  mostrarVistaResultado('success-yes-view');
 }
 
 // Fondo y efectos

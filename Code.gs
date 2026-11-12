@@ -1,12 +1,42 @@
 // Controladores
 function doGet(e) {
-  var template = HtmlService.createTemplateFromFile('Index');
-  template.config = obtenerConfiguracionEvento();
+  // Diagnóstico
+  try {
+    var ssId = obtenerSpreadsheetId();
+    if (!ssId) {
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          status: 'error',
+          message: 'No hay SPREADSHEET_ID configurado en Config.gs'
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
 
-  return template.evaluate()
-    .setTitle(CONFIG.NOMBRE_EVENTO + ' | ' + CONFIG.EMPRESA)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=5.0')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    var ss = SpreadsheetApp.openById(ssId);
+    var sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) {
+      inicializarSistema();
+      sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: 'online',
+        message: 'Servicio Webhook de confirmaciones activo',
+        spreadsheetId: ssId,
+        sheetName: CONFIG.SHEET_NAME,
+        sheetConnected: sheet ? true : false,
+        totalFilas: sheet ? sheet.getLastRow() : 0
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: 'error',
+        message: 'Error al conectar con la planilla: ' + err.toString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 function doPost(e) {
@@ -43,10 +73,6 @@ function doPost(e) {
 }
 
 // Utilidades
-function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
-}
-
 function sanitizarTexto(texto) {
   if (!texto || typeof texto !== 'string') {
     return '';
@@ -58,60 +84,19 @@ function sanitizarTexto(texto) {
 
 // Inicialización
 function obtenerSpreadsheetId() {
+  if (CONFIG.SPREADSHEET_ID && CONFIG.SPREADSHEET_ID.trim() !== '') {
+    return CONFIG.SPREADSHEET_ID.trim();
+  }
   var idGuardado = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-  if (idGuardado && idGuardado.trim() !== '') {
-    return idGuardado.trim();
-  }
-  return CONFIG.SPREADSHEET_ID ? CONFIG.SPREADSHEET_ID.trim() : '';
-}
-
-function crearPlanillaBaseDatos() {
-  // Consultas a base de datos
-  var nombreLibro = CONFIG.NOMBRE_EVENTO + ' - ' + CONFIG.EMPRESA;
-  var ss = SpreadsheetApp.create(nombreLibro);
-  var sheet = ss.getActiveSheet();
-  sheet.setName(CONFIG.SHEET_NAME);
-
-  // Procesamiento de datos
-  var headers = ['TIMESTAMP', 'NOMBRE', 'ASISTENCIA', 'RESTRICCION_ALIMENTARIA', 'DETALLE_RESTRICCION', 'EMAIL'];
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-
-  var headerRange = sheet.getRange(1, 1, 1, headers.length);
-  headerRange.setBackground('#101B32');
-  headerRange.setFontColor('#FFFFFF');
-  headerRange.setFontWeight('bold');
-  headerRange.setHorizontalAlignment('center');
-  sheet.setFrozenRows(1);
-  sheet.autoResizeColumns(1, headers.length);
-
-  // Configuración
-  var ssId = ss.getId();
-  var ssUrl = ss.getUrl();
-
-  try {
-    DriveApp.getFileById(ssId).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT);
-  } catch (e) {
-    // Gestión de errores
-  }
-
-  PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', ssId);
-
-  Logger.log('Planilla creada exitosamente: ' + ssUrl);
-  Logger.log('ID para CONFIG.SPREADSHEET_ID: ' + ssId);
-
-  // Respuesta
-  return {
-    success: true,
-    id: ssId,
-    url: ssUrl
-  };
+  return (idGuardado && idGuardado.trim() !== '') ? idGuardado.trim() : '';
 }
 
 function inicializarSistema() {
   // Consultas a base de datos
   var ssId = obtenerSpreadsheetId();
   if (!ssId) {
-    return crearPlanillaBaseDatos();
+    Logger.log('Error: No hay SPREADSHEET_ID configurado.');
+    return { success: false, message: 'No hay SPREADSHEET_ID configurado.' };
   }
 
   var ss = SpreadsheetApp.openById(ssId);
@@ -271,7 +256,7 @@ function guardarConfirmacion(datos) {
       return {
         success: false,
         code: 'NOT_CONFIGURED',
-        message: 'La planilla de confirmaciones aún no ha sido generada. Por favor, ejecutá la función crearPlanillaBaseDatos en el editor de Apps Script.'
+        message: 'No hay SPREADSHEET_ID configurado.'
       };
     }
 
@@ -324,7 +309,7 @@ function guardarConfirmacion(datos) {
     return {
       success: false,
       code: 'SERVER_ERROR',
-      message: 'No pudimos registrar tu respuesta. Por favor, intentá nuevamente.'
+      message: 'No pudimos registrar tu respuesta: ' + err.toString()
     };
   } finally {
     if (adquirido) {
@@ -335,4 +320,17 @@ function guardarConfirmacion(datos) {
       }
     }
   }
+}
+
+// Función de prueba directa desde el editor
+function probarInsercionDirecta() {
+  var datosPrueba = {
+    nombre: 'Prueba de Conexión',
+    asistencia: 'SI',
+    tieneRestriccion: 'NO',
+    detalleRestriccion: '-'
+  };
+  var res = guardarConfirmacion(datosPrueba);
+  Logger.log('RESULTADO DE LA PRUEBA: ' + JSON.stringify(res));
+  return res;
 }
