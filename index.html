@@ -130,6 +130,20 @@
             </p>
           </div>
 
+          <!-- Banner de error o estado -->
+          <div id="status-banner" class="status-banner" role="alert" aria-live="assertive" hidden>
+            <div class="banner-header">
+              <div class="banner-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <span id="status-banner-text" class="banner-text"></span>
+            </div>
+          </div>
+
           <!-- Formulario interactivo -->
           <div id="form-container" class="form-container">
             <form id="rsvp-form" class="rsvp-form" novalidate>
@@ -216,13 +230,15 @@
                 </div>
               </div>
 
-              <!-- Acción única del formulario: Enviar por WhatsApp -->
+              <!-- Acción del formulario: Guardar en planilla -->
               <div class="form-actions">
-                <button type="submit" id="submit-btn" class="btn-submit btn-whatsapp">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.071.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564c.173.087.289.129.332.202.043.073.043.419-.101.824z"/>
-                  </svg>
-                  <span id="btn-label" class="btn-text">CONFIRMAR POR WHATSAPP</span>
+                <button type="submit" id="submit-btn" class="btn-submit">
+                  <span id="btn-label" class="btn-text">CONFIRMAR ASISTENCIA</span>
+                  <span id="btn-loader" class="btn-loader" aria-hidden="true" hidden>
+                    <svg class="spinner-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="32" stroke-dashoffset="12"/>
+                    </svg>
+                  </span>
                 </button>
               </div>
             </form>
@@ -238,15 +254,9 @@
             </div>
             <h3 class="result-title">¡Excelente! Nos vemos en la despedida.</h3>
             <p class="result-description">
-              Tu mensaje fue preparado para enviarse a la coordinación por WhatsApp. Si la aplicación no se abrió automáticamente, presiona el botón a continuación:
+              Tu confirmación quedó registrada correctamente en la lista del evento. ¡Te esperamos para compartir una gran noche!
             </p>
             <div class="result-actions">
-              <a href="#" id="success-whatsapp-btn" class="btn-whatsapp" target="_blank" rel="noopener noreferrer">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.071.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564c.173.087.289.129.332.202.043.073.043.419-.101.824z"/>
-                </svg>
-                <span>Abrir WhatsApp</span>
-              </a>
               <button type="button" id="btn-editar-si" class="btn-outline">
                 Modificar mi respuesta
               </button>
@@ -266,15 +276,9 @@
             </div>
             <h3 class="result-title">¡Gracias por responder!</h3>
             <p class="result-description">
-              Lamentamos que no puedas acompañarnos. Tu aviso fue preparado para WhatsApp. Si la aplicación no se abrió automáticamente, presiona el botón a continuación:
+              Registramos tu respuesta. Lamentamos que no puedas acompañarnos esta vez.
             </p>
             <div class="result-actions">
-              <a href="#" id="success-whatsapp-no-btn" class="btn-whatsapp" target="_blank" rel="noopener noreferrer">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.071.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564c.173.087.289.129.332.202.043.073.043.419-.101.824z"/>
-                </svg>
-                <span>Abrir WhatsApp</span>
-              </a>
               <button type="button" id="btn-editar-no" class="btn-outline">
                 Modificar mi respuesta
               </button>

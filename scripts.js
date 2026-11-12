@@ -3,12 +3,15 @@ var estadoApp = {
   nombre: '',
   asistencia: null,
   tieneRestriccion: 'NO',
-  detalleRestriccion: ''
+  detalleRestriccion: '',
+  enviando: false
 };
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', function () {
   aplicarConfiguracion();
+  ocultarBannerError();
+  alternarEstadoCarga(false);
   mostrarFormulario();
   iniciarParticulas();
   iniciarEventosFormulario();
@@ -28,7 +31,7 @@ function obtenerConfig() {
     HORARIO_EVENTO: '20:00 hs',
     LUGAR_EVENTO: 'Salón Sosiego',
     UBICACION_MAPS_URL: 'https://maps.app.goo.gl/Wj3KGgGST2dAqve68',
-    WHATSAPP_NUMERO: '5493442654321'
+    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzMEK3NgsSS3i2_GPbfy4QsRI1H5fqttNlzJXC8kmq7xpqAH8B5-SV9ycDsDI1vosVb/exec'
   };
 }
 
@@ -103,6 +106,7 @@ function mostrarFormulario() {
   var radioSi = document.getElementById('asistencia-si');
   alternarVisibilidadRestriccion(radioSi && radioSi.checked);
   actualizarEstilosRadios();
+  ocultarBannerError();
 }
 
 function alternarVisibilidadRestriccion(asiste) {
@@ -164,28 +168,51 @@ function mostrarVistaResultado(vistaId) {
     vista.style.display = 'flex';
     vista.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
+  ocultarBannerError();
 }
 
-// Generador de mensajes de WhatsApp
-function armarMensajeWhatsApp(nombre, asistencia, tieneRestriccion, detalleRestriccion) {
-  var cfg = obtenerConfig();
-  var empresa = cfg.EMPRESA || 'LP Pietroboni';
-  var nombreInvitado = nombre && nombre.trim() ? nombre.trim() : 'Invitado/a';
-  var texto = 'Hola! Te escribo por la Despedida de Año de ' + empresa + '.\n\n';
-  texto += 'Nombre: ' + nombreInvitado + '\n';
-  if (asistencia === 'SI') {
-    texto += 'Asistencia: ¡Sí, ahí estaré!\n';
-    if (tieneRestriccion === 'SI' && detalleRestriccion) {
-      texto += 'Menú especial / Restricción: ' + detalleRestriccion + '\n';
-    } else {
-      texto += 'Menú especial: Sin restricciones\n';
-    }
-  } else if (asistencia === 'NO') {
-    texto += 'Asistencia: No podré asistir\n';
-  } else {
-    texto += 'Quiero confirmar mi asistencia al evento.\n';
+function mostrarBannerError(mensaje) {
+  if (!mensaje || typeof mensaje !== 'string' || mensaje.trim() === '') {
+    return;
   }
-  return texto;
+  var banner = document.getElementById('status-banner');
+  var texto = document.getElementById('status-banner-text');
+
+  if (banner && texto) {
+    texto.textContent = mensaje.trim();
+    banner.hidden = false;
+    banner.style.display = 'flex';
+    banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function ocultarBannerError() {
+  var banner = document.getElementById('status-banner');
+  var texto = document.getElementById('status-banner-text');
+  if (banner) {
+    banner.hidden = true;
+    banner.style.display = 'none';
+  }
+  if (texto) {
+    texto.textContent = '';
+  }
+}
+
+function alternarEstadoCarga(cargando) {
+  estadoApp.enviando = cargando;
+  var btn = document.getElementById('submit-btn');
+  var label = document.getElementById('btn-label');
+  var loader = document.getElementById('btn-loader');
+
+  if (btn) btn.disabled = cargando;
+  if (label) {
+    label.hidden = cargando;
+    label.style.display = cargando ? 'none' : 'inline';
+  }
+  if (loader) {
+    loader.hidden = !cargando;
+    loader.style.display = cargando ? 'flex' : 'none';
+  }
 }
 
 function actualizarEstilosRadios() {
@@ -369,8 +396,12 @@ function validarFormulario(nombre, asistencia, tieneRestriccion, detalleRestricc
 }
 
 // Procesamiento de datos
-function procesarEnvioFormulario(evento) {
+async function procesarEnvioFormulario(evento) {
   evento.preventDefault();
+
+  if (estadoApp.enviando) {
+    return;
+  }
 
   var nombreInput = document.getElementById('nombre-input');
   var nombre = nombreInput ? nombreInput.value.trim() : '';
@@ -398,36 +429,51 @@ function procesarEnvioFormulario(evento) {
     return;
   }
 
-  estadoApp.nombre = nombre;
-  estadoApp.asistencia = asistencia;
-  estadoApp.tieneRestriccion = tieneRestriccion;
-  estadoApp.detalleRestriccion = detalleRestriccion;
+  alternarEstadoCarga(true);
+  ocultarBannerError();
 
-  // Generación del enlace de WhatsApp
+  var payload = {
+    nombre: nombre,
+    asistencia: asistencia,
+    tieneRestriccion: tieneRestriccion,
+    detalleRestriccion: detalleRestriccion
+  };
+
   var cfg = obtenerConfig();
-  var numero = cfg.WHATSAPP_NUMERO || '5493442654321';
-  var mensaje = armarMensajeWhatsApp(nombre, asistencia, tieneRestriccion, detalleRestriccion);
-  var urlWhatsApp = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje);
+  var urlEndpoint = cfg.APPS_SCRIPT_URL;
 
-  // Asignación de enlace a los botones de las vistas de éxito
-  var btnSi = document.getElementById('success-whatsapp-btn');
-  if (btnSi) {
-    btnSi.href = urlWhatsApp;
-  }
-  var btnNo = document.getElementById('success-whatsapp-no-btn');
-  if (btnNo) {
-    btnNo.href = urlWhatsApp;
-  }
+  // Consultas a base de datos (Simple POST Request sin preflight OPTIONS)
+  try {
+    await fetch(urlEndpoint, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify(payload)
+    });
 
-  // Despliegue de vista de éxito
-  if (asistencia === 'SI') {
+    alternarEstadoCarga(false);
+    alCompletarConfirmacion(payload);
+  } catch (err) {
+    // Gestión de errores
+    alternarEstadoCarga(false);
+    mostrarBannerError('No pudimos conectar con el servidor para registrar tu confirmación en la planilla. Por favor, verificá tu conexión e intentá nuevamente.');
+  }
+}
+
+// Respuesta
+function alCompletarConfirmacion(datos) {
+  estadoApp.nombre = datos.nombre || '';
+  estadoApp.asistencia = datos.asistencia || '';
+  estadoApp.tieneRestriccion = datos.tieneRestriccion || 'NO';
+  estadoApp.detalleRestriccion = datos.detalleRestriccion || '';
+
+  if (datos.asistencia === 'SI') {
     mostrarVistaResultado('success-yes-view');
   } else {
     mostrarVistaResultado('success-no-view');
   }
-
-  // Apertura de WhatsApp en pestaña/app
-  window.open(urlWhatsApp, '_blank');
 }
 
 // Fondo y efectos

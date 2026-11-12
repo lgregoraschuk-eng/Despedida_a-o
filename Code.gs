@@ -12,8 +12,17 @@ function doGet(e) {
 function doPost(e) {
   // Procesamiento de datos
   try {
-    var contents = (e && e.postData && e.postData.contents) ? e.postData.contents : '{}';
-    var datos = JSON.parse(contents);
+    var datos = {};
+    if (e && e.postData && e.postData.contents) {
+      try {
+        datos = JSON.parse(e.postData.contents);
+      } catch (errJson) {
+        datos = e.parameter || {};
+      }
+    } else if (e && e.parameter) {
+      datos = e.parameter;
+    }
+
     var resultado = guardarConfirmacion(datos);
 
     // Respuesta
